@@ -19,22 +19,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    // Get the raw body data for better XML handling
+    // Get body data - handle different formats
+    let bodyData = req.body
     let rawBody = ''
-    let parsedBody = req.body
     
-    // If we have a readable stream, capture the raw data
-    if (req.body && typeof req.body === 'object' && req.body.toString) {
-      rawBody = req.body.toString()
-    } else if (typeof req.body === 'string') {
-      rawBody = req.body
+    // Convert body to string for raw capture
+    if (bodyData) {
+      if (typeof bodyData === 'string') {
+        rawBody = bodyData
+      } else if (typeof bodyData === 'object') {
+        rawBody = JSON.stringify(bodyData, null, 2)
+      }
     }
 
-    // Detect if content is XML
+    // Detect content type and format
     const contentType = req.headers['content-type'] || ''
+    const isJSON = contentType.includes('application/json')
     const isXML = contentType.includes('xml') || 
                   contentType.includes('text/plain') && rawBody.trim().startsWith('<?xml') ||
                   rawBody.trim().startsWith('<?xml')
+    const isFormData = contentType.includes('application/x-www-form-urlencoded') || 
+                       contentType.includes('multipart/form-data')
 
     // Capture all request data
     const capturedData = {
@@ -43,23 +48,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       url: req.url,
       headers: req.headers,
       query: req.query,
-      body: req.body,
-      // Add raw body for XML and other raw data
+      // Body data - multiple formats for better capture
+      body: bodyData,
       rawBody: rawBody || null,
-      // Content type detection
+      bodyType: isJSON ? 'json' : isXML ? 'xml' : isFormData ? 'form' : 'unknown',
+      // Content type and format detection
       contentType: contentType,
+      isJSON: isJSON,
       isXML: isXML,
+      isFormData: isFormData,
       // Additional request information
       ip: req.headers['x-forwarded-for'] || req.connection?.remoteAddress,
       userAgent: req.headers['user-agent'],
       contentLength: req.headers['content-length']
-      // Vercel specific headers
-      // vercelHeaders: {
-      //   'x-vercel-id': req.headers['x-vercel-id'],
-      //   'x-real-ip': req.headers['x-real-ip'],
-      //   'x-forwarded-proto': req.headers['x-forwarded-proto'],
-      //   'x-forwarded-host': req.headers['x-forwarded-host']
-      // }
     }
 
     // Set CORS headers for cross-origin requests

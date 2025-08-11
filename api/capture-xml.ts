@@ -27,21 +27,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    // Get raw body data - this is crucial for XML
+    // Get body data - handle different formats
+    let bodyData = req.body
     let rawBody = ''
     
-    // Handle different body formats
-    if (req.body) {
-      if (typeof req.body === 'string') {
-        rawBody = req.body
-      } else if (typeof req.body === 'object') {
-        // If it's a Buffer or stream-like object
-        if (req.body.toString) {
-          rawBody = req.body.toString('utf8')
-        } else {
-          // If it's a parsed object, stringify it
-          rawBody = JSON.stringify(req.body, null, 2)
-        }
+    // Convert body to string for raw capture
+    if (bodyData) {
+      if (typeof bodyData === 'string') {
+        rawBody = bodyData
+      } else if (typeof bodyData === 'object') {
+        rawBody = JSON.stringify(bodyData, null, 2)
       }
     }
 
@@ -85,8 +80,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       url: req.url,
       headers: req.headers,
       query: req.query,
-      body: req.body,
-      // Raw body data (important for XML)
+      // Body data - multiple formats for better capture
+      body: bodyData,
       rawBody: rawBody || null,
       // Content type and format detection
       contentType: contentType,
@@ -96,13 +91,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       ip: req.headers['x-forwarded-for'] || req.connection?.remoteAddress,
       userAgent: req.headers['user-agent'],
       contentLength: req.headers['content-length']
-      // Vercel specific headers
-    //   vercelHeaders: {
-    //     'x-vercel-id': req.headers['x-vercel-id'],
-    //     'x-real-ip': req.headers['x-real-ip'],
-    //     'x-forwarded-proto': req.headers['x-forwarded-proto'],
-    //     'x-forwarded-host': req.headers['x-forwarded-host']
-    //   }
     }
 
     // Set CORS headers for cross-origin requests
