@@ -32,6 +32,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
 
+    // If body is empty, try to get it from the raw request
+    if (!bodyData && !rawBody) {
+      // For cases where body parser didn't work
+      const chunks: any[] = []
+      req.on('data', (chunk) => {
+        chunks.push(chunk)
+      })
+      
+      req.on('end', () => {
+        if (chunks.length > 0) {
+          rawBody = Buffer.concat(chunks).toString('utf8')
+          bodyData = rawBody
+        }
+      })
+    }
+
     // Detect content type and format
     const contentType = req.headers['content-type'] || ''
     const isJSON = contentType.includes('application/json')
@@ -40,6 +56,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                   rawBody.trim().startsWith('<?xml')
     const isFormData = contentType.includes('application/x-www-form-urlencoded') || 
                        contentType.includes('multipart/form-data')
+    const isTextPlain = contentType.includes('text/plain')
+
+    // Try to parse body based on content type
+    let parsedBody = bodyData
+    if (isJSON && typeof bodyData === 'string') {
+      try {
+        parsedBody = JSON.parse(bodyData)
+      } catch (e) {
+        // Keep as string if JSON parsing fails
+        parsedBody = bodyData
+      }
+    } else if (isFormData && typeof bodyData === 'string') {
+      // Parse form data
+      try {
+        const formData = new URLSearchParams(bodyData)
+        parsedBody = Object.fromEntries(formData)
+      } catch (e) {
+        parsedBody = bodyData
+      }
+    }
 
     // Capture all request data
     const capturedData = {
@@ -49,18 +85,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       headers: req.headers,
       query: req.query,
       // Body data - multiple formats for better capture
-      body: bodyData,
+      body: parsedBody,
       rawBody: rawBody || null,
-      bodyType: isJSON ? 'json' : isXML ? 'xml' : isFormData ? 'form' : 'unknown',
+      bodyType: isJSON ? 'json' : isXML ? 'xml' : isFormData ? 'form' : isTextPlain ? 'text' : 'unknown',
       // Content type and format detection
       contentType: contentType,
       isJSON: isJSON,
       isXML: isXML,
       isFormData: isFormData,
+      isTextPlain: isTextPlain,
       // Additional request information
       ip: req.headers['x-forwarded-for'] || req.connection?.remoteAddress,
       userAgent: req.headers['user-agent'],
-      contentLength: req.headers['content-length']
+      contentLength: req.headers['content-length'],
+      // Debug info
+      bodyExists: !!bodyData,
+      rawBodyExists: !!rawBody,
+      bodyDataType: typeof bodyData,
+      rawBodyLength: rawBody ? rawBody.length : 0
     }
 
     // Set CORS headers for cross-origin requests
