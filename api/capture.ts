@@ -45,17 +45,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Return the captured data
     return res.status(200).json({
-      success: true,
-      message: 'Request data captured successfully',
-      data: capturedData
+      // success: true,
+      // message: 'Request data captured successfully',
+      // data: capturedData
     })
 
   } catch (error) {
-    console.error('Error capturing request data:', error)
+    // console.error('Error capturing request data:', error)
     return res.status(500).json({
-      success: false,
-      error: 'Internal server error',
-      message: error instanceof Error ? error.message : 'Unknown error'
+      // success: false,
+      // error: 'Internal server error',
+      // message: error instanceof Error ? error.message : 'Unknown error'
     })
   }
+
 } 
