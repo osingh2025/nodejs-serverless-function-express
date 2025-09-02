@@ -126,33 +126,34 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       })
       
       firestoreResult = {
-        success: true,
-        documentId: docRef.id,
-        message: 'Data saved to Firestore successfully'
+        // success: true,
+        // documentId: docRef.id,
+        // message: 'Data saved to Firestore successfully'
       }
     } catch (firestoreError) {
-      console.error('Firestore error:', firestoreError)
+      // console.error('Firestore error:', firestoreError)
       firestoreResult = {
-        success: false,
-        error: 'Failed to save to Firestore',
-        message: firestoreError instanceof Error ? firestoreError.message : 'Unknown Firestore error'
+        // success: false,
+        // error: 'Failed to save to Firestore',
+        // message: firestoreError instanceof Error ? firestoreError.message : 'Unknown Firestore error'
       }
     }
 
     // Return the captured data along with Firestore result
     return res.status(200).json({
-      success: true,
-      message: 'Request data captured successfully',
-      data: capturedData,
-      firestore: firestoreResult
+      // success: true,
+      // message: 'Request data captured successfully',
+      // data: capturedData,
+      // firestore: firestoreResult
     })
 
   } catch (error) {
-    console.error('Error capturing request data:', error)
+    // console.error('Error capturing request data:', error)
     return res.status(500).json({
-      success: false,
-      error: 'Internal server error',
-      message: error instanceof Error ? error.message : 'Unknown error'
+      // success: false,
+      // error: 'Internal server error',
+      // message: error instanceof Error ? error.message : 'Unknown error'
     })
   }
+
 } 
